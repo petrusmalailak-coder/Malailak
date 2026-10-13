@@ -1,4 +1,5 @@
 import datetime
+import time
 import altair as alt
 import pandas as pd
 import requests
@@ -62,7 +63,7 @@ def save_data_to_sheets(row_data):
     return False
 
 
-# --- CUSTOM CSS: EFEK KEMBANG API & STYLING PROFESIONAL ---
+# --- CUSTOM CSS: DESAIN PROFESIONAL & TOMBOL BERTEKS PUTIH ---
 st.markdown(
     """
     <style>
@@ -117,25 +118,6 @@ st.markdown(
         padding: 25px;
         border-radius: 20px;
         box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
-    }
-
-    /* --- ANIMASI KEMBANG API MELEDAK --- */
-    @keyframes explode {
-      0% { transform: scale(0.1); opacity: 1; }
-      50% { transform: scale(1.5); opacity: 0.8; }
-      100% { transform: scale(2.5); opacity: 0; }
-    }
-    .firework-banner {
-        background: linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6);
-        padding: 15px 25px;
-        border-radius: 14px;
-        color: white;
-        text-align: center;
-        font-size: 20px;
-        font-weight: 800;
-        animation: explode 0.8s ease-out;
-        box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
-        margin-bottom: 20px;
     }
     </style>
 """,
@@ -531,6 +513,7 @@ if menu == "📊 Dashboard Utama & Filter":
           .configure_view(stroke=None)
       )
 
+      event_f = alt.data_transformers.disable_max_rows()  # safety
       event_f = st.altair_chart(
           chart_f, use_container_width=True, on_select="rerun"
       )
@@ -664,14 +647,13 @@ elif menu == "🎮 Input":
         st.session_state["data_transaksi"] = load_data_from_sheets()
         st.session_state["trigger_reset"] = True
 
-        # Efek Kembang Api Meledak yang Mencolok di Layar
-        st.markdown(
-            '<div class="firework-banner">🎆 BOOM! DATA BERHASIL DI-BLAST KE'
-            " CLOUD! 🎆</div>",
-            unsafe_allow_html=True,
+        st.success(
+            "🎉 HORE! BERHASIL TERSIMPAN KE CLOUD GOOGLE SHEETS! 🚀"
         )
         st.balloons()
-        st.snow()
+        st.toast("Berhasil menyimpan transaksi!", icon="🎉")
+
+        time.sleep(1.5)
         st.rerun()
       else:
         st.error(
