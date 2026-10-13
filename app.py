@@ -11,18 +11,17 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- PENGATURAN URL GOOGLE APPS SCRIPT (AMAN DENGAN SECRETS) ---
+# --- PENGATURAN URL GOOGLE APPS SCRIPT ---
 try:
-  APPS_SCRIPT_URL = st.secrets["https://script.google.com/macros/s/AKfycbxO65ZkA3gMeeiUKWyvkoyfftLaqF0SrWjT2CIvlqP0UaukwVlSPC-MrItewl1F5UJn/exec"]
+  APPS_SCRIPT_URL = st.secrets["APPS_SCRIPT_URL"]
 except:
-  # Cadangan untuk uji coba lokal di laptop (Ganti dengan URL Anda jika perlu)
-  APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxO65ZkA3gMeeiUKWyvkoyfftLaqF0SrWjT2CIvlqP0UaukwVlSPC-MrItewl1F5UJn/exec"
+  APPS_SCRIPT_URL = "URL_WEB_APP_ANDA_DISINI"
 
 # --- FUNGSI AMBIL & KIRIM DATA KE GOOGLE SHEETS ---
 
 
 def load_data_from_sheets():
-  if not APPS_SCRIPT_URL or APPS_SCRIPT_URL == "https://script.google.com/macros/s/AKfycbxO65ZkA3gMeeiUKWyvkoyfftLaqF0SrWjT2CIvlqP0UaukwVlSPC-MrItewl1F5UJn/exec":
+  if not APPS_SCRIPT_URL or APPS_SCRIPT_URL == "URL_WEB_APP_ANDA_DISINI":
     return pd.DataFrame([
         {
             "Tanggal": "2026-10-01",
@@ -52,7 +51,7 @@ def load_data_from_sheets():
 
 
 def save_data_to_sheets(row_data):
-  if not APPS_SCRIPT_URL or APPS_SCRIPT_URL == "https://script.google.com/macros/s/AKfycbxO65ZkA3gMeeiUKWyvkoyfftLaqF0SrWjT2CIvlqP0UaukwVlSPC-MrItewl1F5UJn/exec":
+  if not APPS_SCRIPT_URL or APPS_SCRIPT_URL == "URL_WEB_APP_ANDA_DISINI":
     return False
   try:
     response = requests.post(APPS_SCRIPT_URL, json=row_data)
@@ -151,7 +150,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Navigasi Menu Atas
+# Navigasi Menu Atas Horizontal Asli
 menu = st.radio(
     "Navigasi",
     [
@@ -552,12 +551,93 @@ elif menu == "⚙️ Pengaturan (Admin)":
     st.success("🔓 Akses Diterima!")
     st.markdown("---")
     st.subheader("👥 Kelola Anggota Keluarga (Member)")
-    for m in list_member:
-      st.write(f"- {m}")
-    st.info(
-        "Pengaturan penambahan member/kategori sementara tersimpan di sesi"
-        " aktif."
+    col_m1, col_m2, col_m3 = st.columns(3)
+
+    with col_m1:
+      new_member = st.text_input(
+          "Tambah Member Baru (Contoh: Nenek 👵)", key="new_member_input"
+      )
+      if st.button("➕ Tambah Member"):
+        if new_member and new_member not in st.session_state["list_member"]:
+          st.session_state["list_member"].append(new_member)
+          st.success(f"Berhasil menambahkan member: **{new_member}**")
+          st.rerun()
+        elif new_member in st.session_state["list_member"]:
+          st.warning("Nama member tersebut sudah ada!")
+
+    with col_m2:
+      member_to_edit = st.selectbox(
+          "Pilih Member yang Ingin Diubah/Rename",
+          st.session_state["list_member"],
+          key="m_edit_select",
+      )
+      rename_member = st.text_input(
+          "Nama Baru:", placeholder="Contoh: Extended Cost / Rumah 🏡"
+      )
+      if st.button("✏️ Ubah Nama Member"):
+        if rename_member and rename_member not in st.session_state["list_member"]:
+          idx = st.session_state["list_member"].index(member_to_edit)
+          st.session_state["list_member"][idx] = rename_member
+          st.success(
+              f"Berhasil mengubah **{member_to_edit}** menjadi"
+              f" **{rename_member}**!"
+          )
+          st.rerun()
+        elif rename_member in st.session_state["list_member"]:
+          st.warning("Nama tersebut sudah ada!")
+
+    with col_m3:
+      member_to_del = st.selectbox(
+          "Pilih Member yang Ingin Dihapus",
+          st.session_state["list_member"],
+          key="m_del_select",
+      )
+      if st.button("🗑️ Hapus Member"):
+        if len(st.session_state["list_member"]) > 1:
+          st.session_state["list_member"].remove(member_to_del)
+          st.success(f"Berhasil menghapus member: **{member_to_del}**")
+          st.rerun()
+        else:
+          st.warning("Minimal harus menyisakan 1 member di dalam sistem!")
+
+    st.markdown("---")
+    st.subheader("🏷️ Kelola Kategori Transaksi")
+    selected_type = st.selectbox(
+        "Pilih Tipe Transaksi", list(st.session_state["kategori_by_tipe"].keys())
     )
+
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+      new_cat = st.text_input(
+          f"Tambah Kategori Baru untuk {selected_type}", key="new_cat_input"
+      )
+      if st.button("➕ Tambah Kategori"):
+        if (
+            new_cat
+            and new_cat
+            not in st.session_state["kategori_by_tipe"][selected_type]
+        ):
+          st.session_state["kategori_by_tipe"][selected_type].append(new_cat)
+          st.success(
+              f"Berhasil menambahkan kategori **{new_cat}** ke {selected_type}!"
+          )
+          st.rerun()
+        elif new_cat in st.session_state["kategori_by_tipe"][selected_type]:
+          st.warning("Kategori tersebut sudah ada di tipe ini!")
+
+    with col_c2:
+      cat_to_del = st.selectbox(
+          f"Pilih Kategori yang Ingin Dihapus dari {selected_type}",
+          st.session_state["kategori_by_tipe"][selected_type],
+      )
+      if st.button("🗑️ Hapus Kategori"):
+        if len(st.session_state["kategori_by_tipe"][selected_type]) > 1:
+          st.session_state["kategori_by_tipe"][selected_type].remove(cat_to_del)
+          st.success(f"Berhasil menghapus kategori **{cat_to_del}**!")
+          st.rerun()
+        else:
+          st.warning("Minimal harus menyisakan 1 kategori dalam tipe ini!")
+
   elif admin_pass:
     st.error("❌ Password salah!")
   else:
