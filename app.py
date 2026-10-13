@@ -62,7 +62,7 @@ def save_data_to_sheets(row_data):
     return False
 
 
-# --- CUSTOM CSS: DESAIN PROFESIONAL & TOMBOL BERTEKS PUTIH ---
+# --- CUSTOM CSS: EFEK KEMBANG API & STYLING PROFESIONAL ---
 st.markdown(
     """
     <style>
@@ -117,6 +117,25 @@ st.markdown(
         padding: 25px;
         border-radius: 20px;
         box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+    }
+
+    /* --- ANIMASI KEMBANG API MELEDAK --- */
+    @keyframes explode {
+      0% { transform: scale(0.1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.8; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    .firework-banner {
+        background: linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6);
+        padding: 15px 25px;
+        border-radius: 14px;
+        color: white;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 800;
+        animation: explode 0.8s ease-out;
+        box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+        margin-bottom: 20px;
     }
     </style>
 """,
@@ -644,11 +663,15 @@ elif menu == "🎮 Input":
       if success:
         st.session_state["data_transaksi"] = load_data_from_sheets()
         st.session_state["trigger_reset"] = True
-        st.success(
-            "🎉 Hore! Berhasil tersimpan secara online ke Google Sheets!"
+
+        # Efek Kembang Api Meledak yang Mencolok di Layar
+        st.markdown(
+            '<div class="firework-banner">🎆 BOOM! DATA BERHASIL DI-BLAST KE'
+            " CLOUD! 🎆</div>",
+            unsafe_allow_html=True,
         )
         st.balloons()
-        st.snow()  # Efek bintang-bintang / salju turun gemerlap saat sukses
+        st.snow()
         st.rerun()
       else:
         st.error(
