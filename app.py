@@ -414,12 +414,12 @@ if menu == "📊 Dashboard Utama & Filter":
       df_filtered = df_filtered[df_filtered["Kategori"].isin(sel_cats)]
 
   st.markdown("---")
-  st.subheader("📋 Hasil & Ringkasan Filter")
+  st.subheader("📋 Hasil, Grafik & Ringkasan Filter")
 
   if not is_filter_active:
     st.info(
         "👆 Silakan pilih filter di atas (Member, Tipe, Kategori, atau Waktu)"
-        " untuk menampilkan data transaksi."
+        " untuk menampilkan data & grafik transaksi."
     )
   else:
     f_total = df_filtered["Nominal"].sum() if not df_filtered.empty else 0
@@ -429,6 +429,84 @@ if menu == "📊 Dashboard Utama & Filter":
     r_col1.metric("Total Nominal Dari Filter Ini", f"Rp {f_total:,.0f}")
     r_col2.metric("Jumlah Transaksi Ditemukan", f"{f_count} Data")
 
+    # --- GRAFIK KUSTOM HASIL FILTER ---
+    if not df_filtered.empty:
+      st.markdown("<br>", unsafe_allow_html=True)
+      st.subheader("📊 Visualisasi Grafik Hasil Filter per Member")
+
+      df_chart_f = (
+          df_filtered.groupby(["Member", "Tipe"])["Nominal"]
+          .sum()
+          .reset_index()
+      )
+
+      base_f = alt.Chart(df_chart_f).encode(
+          x=alt.X(
+              "Member:N",
+              axis=alt.Axis(
+                  labelAngle=0,
+                  labelColor="black",
+                  labelFontWeight="bold",
+                  title="Member",
+              ),
+          ),
+          y=alt.Y(
+              "Nominal:Q",
+              axis=alt.Axis(
+                  labelColor="black",
+                  labelFontWeight="bold",
+                  title="Nominal (Rp)",
+              ),
+          ),
+          color=alt.Color(
+              "Tipe:N",
+              scale=alt.Scale(
+                  domain=[
+                      "Income",
+                      "Expenses",
+                      "Top Up Saving",
+                      "Withdraw Saving",
+                  ],
+                  range=["#10b981", "#f43f5e", "#8b5cf6", "#0284c7"],
+              ),
+          ),
+          xOffset="Tipe:N",
+      )
+
+      bars_f = base_f.mark_bar(
+          cornerRadiusTopLeft=4, cornerRadiusTopRight=4
+      ).encode(
+          tooltip=[
+              alt.Tooltip("Member", title="Member"),
+              alt.Tooltip("Tipe", title="Tipe"),
+              alt.Tooltip("Nominal", title="Nominal (Rp)", format=",.0f"),
+          ]
+      )
+
+      text_f = base_f.mark_text(
+          align="center",
+          baseline="bottom",
+          dy=-5,
+          fontWeight="bold",
+          color="black",
+      ).encode(text=alt.Text("Nominal:Q", format=",.0f"))
+
+      chart_f = (
+          (bars_f + text_f)
+          .properties(height=350)
+          .configure(background="white")
+          .configure_axis(
+              labelColor="black",
+              titleColor="black",
+              tickColor="black",
+              domainColor="black",
+          )
+          .configure_view(stroke=None)
+      )
+
+      st.altair_chart(chart_f, use_container_width=True)
+
+    st.markdown("---")
     st.dataframe(df_filtered, use_container_width=True)
 
 
