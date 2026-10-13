@@ -419,7 +419,7 @@ if menu == "📊 Dashboard Utama & Filter":
   if not is_filter_active:
     st.info(
         "👆 Silakan pilih filter di atas (Member, Tipe, Kategori, atau Waktu)"
-        " untuk menampilkan data & grafik transaksi."
+        " untuk menampilkan grafik transaksi."
     )
   else:
     f_total = df_filtered["Nominal"].sum() if not df_filtered.empty else 0
@@ -429,15 +429,21 @@ if menu == "📊 Dashboard Utama & Filter":
     r_col1.metric("Total Nominal Dari Filter Ini", f"Rp {f_total:,.0f}")
     r_col2.metric("Jumlah Transaksi Ditemukan", f"{f_count} Data")
 
-    # --- GRAFIK KUSTOM HASIL FILTER ---
+    # --- GRAFIK KUSTOM HASIL FILTER DENGAN INTERAKSI KLIK ---
     if not df_filtered.empty:
       st.markdown("<br>", unsafe_allow_html=True)
+      st.markdown(
+          "💡 *Tip: Klik atau tap salah satu batang grafik di bawah untuk"
+          " menampilkan detail transaksi terpilih.*"
+      )
 
       df_chart_f = (
           df_filtered.groupby(["Member", "Tipe"])["Nominal"]
           .sum()
           .reset_index()
       )
+
+      select_f = alt.selection_point(fields=["Member", "Tipe"], name="select_f")
 
       base_f = alt.Chart(df_chart_f).encode(
           x=alt.X(
@@ -472,14 +478,17 @@ if menu == "📊 Dashboard Utama & Filter":
           xOffset="Tipe:N",
       )
 
-      bars_f = base_f.mark_bar(
-          cornerRadiusTopLeft=4, cornerRadiusTopRight=4
-      ).encode(
-          tooltip=[
-              alt.Tooltip("Member", title="Member"),
-              alt.Tooltip("Tipe", title="Tipe"),
-              alt.Tooltip("Nominal", title="Nominal (Rp)", format=",.0f"),
-          ]
+      bars_f = (
+          base_f.mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
+          .encode(
+              opacity=alt.condition(select_f, alt.value(1), alt.value(0.3)),
+              tooltip=[
+                  alt.Tooltip("Member", title="Member"),
+                  alt.Tooltip("Tipe", title="Tipe"),
+                  alt.Tooltip("Nominal", title="Nominal (Rp)", format=",.0f"),
+              ],
+          )
+          .add_params(select_f)
       )
 
       text_f = base_f.mark_text(
@@ -503,10 +512,31 @@ if menu == "📊 Dashboard Utama & Filter":
           .configure_view(stroke=None)
       )
 
-      st.altair_chart(chart_f, use_container_width=True)
+      event_f = st.altair_chart(
+          chart_f, use_container_width=True, on_select="rerun"
+      )
 
-    st.markdown("---")
-    st.dataframe(df_filtered, use_container_width=True)
+      selected_f_points = (
+          event_f.get("selection", {}).get("select_f", [])
+          if isinstance(event_f, dict)
+          else []
+      )
+
+      # Tabel hanya muncul jika ada batang grafik yang di-klik/tap
+      if selected_f_points:
+        clicked_member = selected_f_points[0].get("Member")
+        clicked_tipe = selected_f_points[0].get("Tipe")
+
+        st.markdown("---")
+        st.subheader(
+            f"📋 Detail Transaksi untuk: **{clicked_member}** ({clicked_tipe})"
+        )
+
+        df_detail_sub = df_filtered[
+            (df_filtered["Member"] == clicked_member)
+            & (df_filtered["Tipe"] == clicked_tipe)
+        ]
+        st.dataframe(df_detail_sub, use_container_width=True)
 
 
 # --- HALAMAN 2: INPUT ---
@@ -618,7 +648,7 @@ elif menu == "🎮 Input":
             "🎉 Hore! Berhasil tersimpan secara online ke Google Sheets!"
         )
         st.balloons()
-        st.snow()  # Efek bintang-bintang / salju tambahan saat sukses
+        st.snow()
         st.rerun()
       else:
         st.error(
