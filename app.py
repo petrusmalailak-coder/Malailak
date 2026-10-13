@@ -648,7 +648,7 @@ elif menu == "🎮 Input":
             "🎉 Hore! Berhasil tersimpan secara online ke Google Sheets!"
         )
         st.balloons()
-        st.snow()
+        st.snow()  # Efek bintang-bintang / salju turun gemerlap saat sukses
         st.rerun()
       else:
         st.error(
