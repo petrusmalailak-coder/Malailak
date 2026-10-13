@@ -124,7 +124,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- AMBIL DATA DARI GOOGLE SHEETS & INISIALISASI SESSION STATE ---
+# --- INISIALISASI SESSION STATE ---
 if "data_transaksi" not in st.session_state:
   st.session_state["data_transaksi"] = load_data_from_sheets()
 
@@ -134,6 +134,7 @@ if "list_member" not in st.session_state:
       "Mommy 👩",
       "Kia 👧",
       "Juna 👦 (6 Tahun)",
+      "Sita 👧",
       "Extended Cost 🏡",
   ]
 
@@ -152,12 +153,88 @@ if "kategori_by_tipe" not in st.session_state:
       "Withdraw Saving": ["Ambil Tabungan 💸"],
   }
 
-df = st.session_state["data_transaksi"]
+# Inisialisasi PIN Member (4 Digit)
+if "member_pins" not in st.session_state:
+  st.session_state["member_pins"] = {
+      "Petrus 👨": "1111",
+      "Mommy 👩": "2222",
+      "Kia 👧": "3333",
+      "Juna 👦 (6 Tahun)": "4444",
+      "Sita 👧": "5555",
+      "Extended Cost 🏡": "0000",
+  }
+
+# Inisialisasi Status Login
+if "authenticated" not in st.session_state:
+  st.session_state["authenticated"] = False
+if "current_user" not in st.session_state:
+  st.session_state["current_user"] = None
+if "user_role" not in st.session_state:
+  st.session_state["user_role"] = None
+
+
+# --- HALAMAN LOGIN ---
+if not st.session_state["authenticated"]:
+  st.markdown("<br><br>", unsafe_allow_html=True)
+  col_l1, col_l2, col_l3 = st.columns([1, 1.2, 1])
+  with col_l2:
+    st.markdown(
+        """
+        <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 2px solid #e2e8f0;">
+            <h2 style="text-align: center; color: #0f172a; margin-bottom: 5px;">🔐 Login Keluarga</h2>
+            <p style="text-align: center; color: #64748b; font-size: 13px; margin-bottom: 25px;">Malailak Financial Report</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    login_member = st.selectbox(
+        "Pilih Nama Member", st.session_state["list_member"]
+    )
+    login_pin = st.text_input(
+        "Masukkan PIN (4 Digit)", type="password", max_chars=4
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🚀 MASUK APLIKASI", use_container_width=True):
+      correct_pin = st.session_state["member_pins"].get(login_member, "1111")
+      if login_pin == correct_pin:
+        st.session_state["authenticated"] = True
+        st.session_state["current_user"] = login_member
+        if login_member == "Petrus 👨":
+          st.session_state["user_role"] = "admin"
+        elif login_member == "Mommy 👩":
+          st.session_state["user_role"] = "viewer"
+        else:
+          st.session_state["user_role"] = "child"
+        st.success("🎉 Login Berhasil!")
+        time.sleep(0.8)
+        st.rerun()
+      else:
+        st.error(
+            "❌ PIN yang Anda masukkan salah! Silakan coba lagi (Default PIN"
+            " anak: 3333/4444/5555)."
+        )
+  st.stop()
+
+
+# --- APLIKASI UTAMA (SETELAH LOGIN) ---
+df_full = st.session_state["data_transaksi"]
+current_user = st.session_state["current_user"]
+user_role = st.session_state["user_role"]
+
+# Batasi data jika user adalah anak-anak
+if user_role == "child":
+  df = df_full[df_full["Member"] == current_user].copy()
+else:
+  df = df_full.copy()
+
 list_member = st.session_state["list_member"]
 kategori_by_tipe = st.session_state["kategori_by_tipe"]
 all_types = ["Income", "Expenses", "Top Up Saving", "Withdraw Saving"]
 
-# --- HEADER UTAMA APLIKASI ---
+# --- HEADER UTAMA & INFO AKUN ---
 st.markdown(
     """
     <div class="main-header">
@@ -168,17 +245,38 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Navigasi Menu Atas Horizontal
+col_info1, col_info2 = st.columns([4, 1])
+with col_info1:
+  role_display = (
+      "Super Admin"
+      if user_role == "admin"
+      else ("Full Viewer" if user_role == "viewer" else "Anak / Restricted")
+  )
+  st.info(
+      f"👤 Halo, **{current_user}** | Level Akses: **{role_display}**"
+  )
+with col_info2:
+  if st.button("🚪 Logout", use_container_width=True):
+    st.session_state["authenticated"] = False
+    st.session_state["current_user"] = None
+    st.session_state["user_role"] = None
+    st.rerun()
+
+# Navigasi Menu Sesuai Hak Akses
+if user_role == "admin":
+  menu_options = [
+      "📊 Dashboard Utama & Filter",
+      "🎮 Input",
+      "🗂️ Riwayat",
+      "⚙️ Pengaturan (Admin)",
+  ]
+elif user_role == "viewer":
+  menu_options = ["📊 Dashboard Utama & Filter", "🎮 Input", "🗂️ Riwayat"]
+else:
+  menu_options = ["📊 Dashboard Utama & Filter", "🎮 Input", "🗂️ Riwayat"]
+
 menu = st.radio(
-    "Navigasi",
-    [
-        "📊 Dashboard Utama & Filter",
-        "🎮 Input",
-        "🗂️ Riwayat",
-        "⚙️ Pengaturan (Admin)",
-    ],
-    horizontal=True,
-    label_visibility="collapsed",
+    "Navigasi", menu_options, horizontal=True, label_visibility="collapsed"
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -192,7 +290,9 @@ if menu == "📊 Dashboard Utama & Filter":
       st.session_state["data_transaksi"] = load_data_from_sheets()
       st.rerun()
 
-  st.subheader("GRAND TOTAL")
+  st.subheader(
+      "GRAND TOTAL" + (f" ({current_user})" if user_role == "child" else "")
+  )
   if not df.empty:
     g_income = df[df["Tipe"] == "Income"]["Nominal"].sum()
     g_expense = df[df["Tipe"] == "Expenses"]["Nominal"].sum()
@@ -321,7 +421,8 @@ if menu == "📊 Dashboard Utama & Filter":
     st.subheader("FILTER")
   with col_btn_f:
     if st.button("🧹 Clear Filter", use_container_width=True):
-      st.session_state["sel_members"] = []
+      if user_role != "child":
+        st.session_state["sel_members"] = []
       st.session_state["sel_types"] = []
       st.session_state["time_mode"] = "Semua Waktu"
       st.session_state["sel_cats"] = []
@@ -329,13 +430,17 @@ if menu == "📊 Dashboard Utama & Filter":
 
   f_col1, f_col2, f_col3 = st.columns(3)
   with f_col1:
-    sel_members = st.multiselect(
-        "Pilih Member",
-        list_member,
-        default=[],
-        key="sel_members",
-        placeholder="Pilih member...",
-    )
+    if user_role == "child":
+      sel_members = [current_user]
+      st.markdown(f"**Pilih Member:** `{current_user}` (Terkunci)")
+    else:
+      sel_members = st.multiselect(
+          "Pilih Member",
+          list_member,
+          default=[],
+          key="sel_members",
+          placeholder="Pilih member...",
+      )
   with f_col2:
     sel_types = st.multiselect(
         "Pilih Tipe Transaksi",
@@ -513,7 +618,6 @@ if menu == "📊 Dashboard Utama & Filter":
           .configure_view(stroke=None)
       )
 
-      event_f = alt.data_transformers.disable_max_rows()  # safety
       event_f = st.altair_chart(
           chart_f, use_container_width=True, on_select="rerun"
       )
@@ -544,7 +648,9 @@ if menu == "📊 Dashboard Utama & Filter":
 # --- HALAMAN 2: INPUT ---
 elif menu == "🎮 Input":
   if st.session_state.get("trigger_reset", False):
-    st.session_state["in_member"] = list_member[0]
+    st.session_state["in_member"] = (
+        current_user if user_role == "child" else list_member[0]
+    )
     st.session_state["in_tipe"] = "Expenses"
     st.session_state["in_kategori"] = kategori_by_tipe["Expenses"][0]
     st.session_state["in_quick"] = "Pilih Nominal Cepat"
@@ -556,12 +662,16 @@ elif menu == "🎮 Input":
   st.title("🎈 Catat Keuangan Keluarga")
   st.markdown("---")
 
-  member = st.radio(
-      "**1. Siapa nama member?**",
-      list_member,
-      horizontal=True,
-      key="in_member",
-  )
+  if user_role == "child":
+    st.markdown(f"**1. Nama Member:** `{current_user}` *(Terkunci)*")
+    member = current_user
+  else:
+    member = st.radio(
+        "**1. Siapa nama member?**",
+        list_member,
+        horizontal=True,
+        key="in_member",
+    )
 
   tipe = st.radio(
       "**2. Apa jenis transaksinya?**",
@@ -682,7 +792,7 @@ elif menu == "🗂️ Riwayat":
 
 
 # --- HALAMAN 4: PENGATURAN (ADMIN) ---
-elif menu == "⚙️ Pengaturan (Admin)":
+elif menu == "⚙️ Pengaturan (Admin)" and user_role == "admin":
   st.title("⚙️ Pengaturan Master Data (Admin)")
   admin_pass = st.text_input(
       "🔐 Masukkan Password Admin:", type="password", placeholder="Password..."
@@ -691,6 +801,32 @@ elif menu == "⚙️ Pengaturan (Admin)":
 
   if admin_pass == DEFAULT_PASSWORD:
     st.success("🔓 Akses Diterima!")
+    st.markdown("---")
+
+    # Kelola PIN Member
+    st.subheader("🔐 Kelola PIN Member (4 Digit)")
+    col_p1, col_p2 = st.columns(2)
+    with col_p1:
+      pin_target = st.selectbox(
+          "Pilih Member untuk Ganti PIN",
+          st.session_state["list_member"],
+          key="pin_target_sel",
+      )
+      new_pin_val = st.text_input(
+          "PIN Baru (4 Digit Angka):",
+          type="password",
+          max_chars=4,
+          key="new_pin_input",
+      )
+      if st.button("💾 Simpan PIN Baru"):
+        if len(new_pin_val) == 4 and new_pin_val.isdigit():
+          st.session_state["member_pins"][pin_target] = new_pin_val
+          st.success(f"PIN untuk **{pin_target}** berhasil diperbarui!")
+          time.sleep(1)
+          st.rerun()
+        else:
+          st.warning("PIN harus berupa tepat 4 digit angka!")
+
     st.markdown("---")
     st.subheader("👥 Kelola Anggota Keluarga (Member)")
     col_m1, col_m2, col_m3 = st.columns(3)
@@ -702,7 +838,11 @@ elif menu == "⚙️ Pengaturan (Admin)":
       if st.button("➕ Tambah Member"):
         if new_member and new_member not in st.session_state["list_member"]:
           st.session_state["list_member"].append(new_member)
-          st.success(f"Berhasil menambahkan member: **{new_member}**")
+          st.session_state["member_pins"][new_member] = "1234"  # Default PIN baru
+          st.success(
+              f"Berhasil menambahkan member: **{new_member}** (PIN awal:"
+              " 1234)"
+          )
           st.rerun()
         elif new_member in st.session_state["list_member"]:
           st.warning("Nama member tersebut sudah ada!")
@@ -720,6 +860,11 @@ elif menu == "⚙️ Pengaturan (Admin)":
         if rename_member and rename_member not in st.session_state["list_member"]:
           idx = st.session_state["list_member"].index(member_to_edit)
           st.session_state["list_member"][idx] = rename_member
+          # Pindahkan PIN ke key baru
+          old_pin = st.session_state["member_pins"].pop(
+              member_to_edit, "1111"
+          )
+          st.session_state["member_pins"][rename_member] = old_pin
           st.success(
               f"Berhasil mengubah **{member_to_edit}** menjadi"
               f" **{rename_member}**!"
@@ -737,6 +882,7 @@ elif menu == "⚙️ Pengaturan (Admin)":
       if st.button("🗑️ Hapus Member"):
         if len(st.session_state["list_member"]) > 1:
           st.session_state["list_member"].remove(member_to_del)
+          st.session_state["member_pins"].pop(member_to_del, None)
           st.success(f"Berhasil menghapus member: **{member_to_del}**")
           st.rerun()
         else:
