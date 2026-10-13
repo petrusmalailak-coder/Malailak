@@ -191,7 +191,7 @@ if menu == "📊 Dashboard Utama & Filter":
       st.session_state["data_transaksi"] = load_data_from_sheets()
       st.rerun()
 
-  st.subheader("📌 Grand Total Keuangan Keluarga (Global)")
+  st.subheader("GRAND TOTAL")
   if not df.empty:
     g_income = df[df["Tipe"] == "Income"]["Nominal"].sum()
     g_expense = df[df["Tipe"] == "Expenses"]["Nominal"].sum()
@@ -223,7 +223,7 @@ if menu == "📊 Dashboard Utama & Filter":
     )
 
   st.markdown("<br>", unsafe_allow_html=True)
-  st.subheader("📊 Visualisasi Grafik Kondisi Grand Total")
+  st.subheader("GRAFIK GRAND TOTAL")
   st.markdown(
       "💡 *Tip: Klik atau tap salah satu batang grafik di bawah untuk melihat"
       " hingga 20 history transaksi terakhir.*"
@@ -317,7 +317,7 @@ if menu == "📊 Dashboard Utama & Filter":
 
   col_title_f, col_btn_f = st.columns([4, 1])
   with col_title_f:
-    st.subheader("🔍 Filter & Analisis Data Kustom")
+    st.subheader("FILTER")
   with col_btn_f:
     if st.button("🧹 Clear Filter", use_container_width=True):
       st.session_state["sel_members"] = []
@@ -414,7 +414,7 @@ if menu == "📊 Dashboard Utama & Filter":
       df_filtered = df_filtered[df_filtered["Kategori"].isin(sel_cats)]
 
   st.markdown("---")
-  st.subheader("📋 Hasil, Grafik & Ringkasan Filter")
+  st.subheader("GRAFIK FILTER")
 
   if not is_filter_active:
     st.info(
@@ -432,7 +432,6 @@ if menu == "📊 Dashboard Utama & Filter":
     # --- GRAFIK KUSTOM HASIL FILTER ---
     if not df_filtered.empty:
       st.markdown("<br>", unsafe_allow_html=True)
-      st.subheader("📊 Visualisasi Grafik Hasil Filter per Member")
 
       df_chart_f = (
           df_filtered.groupby(["Member", "Tipe"])["Nominal"]
@@ -523,10 +522,6 @@ elif menu == "🎮 Input":
 
   st.markdown('<div class="kid-box">', unsafe_allow_html=True)
   st.title("🎈 Catat Keuangan Keluarga")
-  st.markdown(
-      "Gunakan halaman ini untuk mencatat pemasukan, pengeluaran, atau tabungan"
-      " langsung ke Google Sheets! 🚀"
-  )
   st.markdown("---")
 
   member = st.radio(
@@ -623,6 +618,7 @@ elif menu == "🎮 Input":
             "🎉 Hore! Berhasil tersimpan secara online ke Google Sheets!"
         )
         st.balloons()
+        st.snow()  # Efek bintang-bintang / salju tambahan saat sukses
         st.rerun()
       else:
         st.error(
@@ -635,7 +631,6 @@ elif menu == "🎮 Input":
 # --- HALAMAN 3: RIWAYAT ---
 elif menu == "🗂️ Riwayat":
   st.title("🗂️ Riwayat Seluruh Transaksi")
-  st.markdown("Daftar lengkap seluruh transaksi dari Google Sheets.")
   st.markdown("---")
 
   if df.empty:
