@@ -62,19 +62,23 @@ def save_data_to_sheets(row_data):
     return False
 
 
-# --- CUSTOM CSS: DESAIN & PERBAIKAN WARNA TEKS MENU ---
+# --- CUSTOM CSS: DESAIN PROFESIONAL & KONTRAS TINGGI ---
 st.markdown(
     """
     <style>
     .stApp { background-color: #f8fafc; }
     
-    /* Memastikan teks menu navigasi horizontal terlihat jelas dan tidak transparan */
-    .stRadio div[role="radiogroup"] label p {
+    /* Paksa semua teks label, header, dan pertanyaan agar terlihat jelas dan gelap */
+    label, .stRadio label p, .stTextInput label, .stSelectbox label, h1, h2, h3, h4, h5, h6, p {
         color: #0f172a !important;
-        font-weight: 700 !important;
-        font-size: 15px !important;
+        font-weight: 600 !important;
     }
     
+    /* Kecuali teks di dalam kartu ringkasan warna-warni yang tetap putih */
+    .custom-card *, .main-header *, .main-header p, .main-header h1 {
+        color: white !important;
+    }
+
     .main-header {
         background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
         padding: 20px 30px;
@@ -157,7 +161,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Navigasi Menu Atas Horizontal Asli
+# Navigasi Menu Atas Horizontal
 menu = st.radio(
     "Navigasi",
     [
@@ -263,7 +267,19 @@ if menu == "📊 Dashboard Utama & Filter":
       align="center", baseline="bottom", dy=-5, fontWeight="bold", color="black"
   ).encode(text=alt.Text("Nominal:Q", format=",.0f"))
 
-  chart_gt = (bars_gt + text_gt).properties(height=300)
+  # Konfigurasi Grafik dengan Background Putih & Sumbu Hitam Tegas
+  chart_gt = (
+      (bars_gt + text_gt)
+      .properties(height=300)
+      .configure(background="white")
+      .configure_axis(
+          labelColor="black",
+          titleColor="black",
+          tickColor="black",
+          domainColor="black",
+      )
+      .configure_view(stroke=None)
+  )
 
   event_gt = st.altair_chart(
       chart_gt, use_container_width=True, on_select="rerun"
@@ -542,7 +558,13 @@ elif menu == "🗂️ Riwayat":
   if df.empty:
     st.info("Belum ada data transaksi.")
   else:
-    st.metric("Total Seluruh Transaksi", f"{len(df)} Data")
+    total_all_nominal = df["Nominal"].sum()
+    r_col1, r_col2 = st.columns(2)
+    r_col1.metric(
+        "Total Nominal Seluruh Transaksi", f"Rp {total_all_nominal:,.0f}"
+    )
+    r_col2.metric("Total Jumlah Transaksi", f"{len(df)} Data")
+    st.markdown("<br>", unsafe_allow_html=True)
     st.dataframe(df, use_container_width=True)
 
 
