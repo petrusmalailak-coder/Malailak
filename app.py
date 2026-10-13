@@ -832,35 +832,43 @@ elif menu == "⚙️ Pengaturan (Admin)" and user_role == "admin":
     col_m1, col_m2, col_m3 = st.columns(3)
 
     with col_m1:
+      st.markdown("**➕ Tambah Member Baru**")
       new_member = st.text_input(
-          "Tambah Member Baru (Contoh: Nenek 👵)", key="new_member_input"
+          "Nama Member (Contoh: Nenek 👵)", key="new_member_input"
       )
-      if st.button("➕ Tambah Member"):
+      new_member_pin = st.text_input(
+          "PIN 4 Digit Baru:",
+          type="password",
+          max_chars=4,
+          key="new_member_pin_input",
+      )
+      if st.button("Tambah Member"):
         if new_member and new_member not in st.session_state["list_member"]:
-          st.session_state["list_member"].append(new_member)
-          st.session_state["member_pins"][new_member] = "1234"  # Default PIN baru
-          st.success(
-              f"Berhasil menambahkan member: **{new_member}** (PIN awal:"
-              " 1234)"
-          )
-          st.rerun()
+          if len(new_member_pin) == 4 and new_member_pin.isdigit():
+            st.session_state["list_member"].append(new_member)
+            st.session_state["member_pins"][new_member] = new_member_pin
+            st.success(
+                f"Berhasil menambahkan member **{new_member}** dengan PIN!"
+            )
+            time.sleep(1)
+            st.rerun()
+          else:
+            st.warning("PIN harus berupa tepat 4 digit angka!")
         elif new_member in st.session_state["list_member"]:
           st.warning("Nama member tersebut sudah ada!")
 
     with col_m2:
+      st.markdown("**✏️ Ubah Nama Member**")
       member_to_edit = st.selectbox(
-          "Pilih Member yang Ingin Diubah/Rename",
-          st.session_state["list_member"],
-          key="m_edit_select",
+          "Pilih Member", st.session_state["list_member"], key="m_edit_select"
       )
       rename_member = st.text_input(
-          "Nama Baru:", placeholder="Contoh: Extended Cost / Rumah 🏡"
+          "Nama Baru:", placeholder="Contoh: Rumah 🏡"
       )
-      if st.button("✏️ Ubah Nama Member"):
+      if st.button("Ubah Nama"):
         if rename_member and rename_member not in st.session_state["list_member"]:
           idx = st.session_state["list_member"].index(member_to_edit)
           st.session_state["list_member"][idx] = rename_member
-          # Pindahkan PIN ke key baru
           old_pin = st.session_state["member_pins"].pop(
               member_to_edit, "1111"
           )
@@ -869,21 +877,22 @@ elif menu == "⚙️ Pengaturan (Admin)" and user_role == "admin":
               f"Berhasil mengubah **{member_to_edit}** menjadi"
               f" **{rename_member}**!"
           )
+          time.sleep(1)
           st.rerun()
         elif rename_member in st.session_state["list_member"]:
           st.warning("Nama tersebut sudah ada!")
 
     with col_m3:
+      st.markdown("**🗑️ Hapus Member**")
       member_to_del = st.selectbox(
-          "Pilih Member yang Ingin Dihapus",
-          st.session_state["list_member"],
-          key="m_del_select",
+          "Pilih Member", st.session_state["list_member"], key="m_del_select"
       )
-      if st.button("🗑️ Hapus Member"):
+      if st.button("Hapus Member"):
         if len(st.session_state["list_member"]) > 1:
           st.session_state["list_member"].remove(member_to_del)
           st.session_state["member_pins"].pop(member_to_del, None)
           st.success(f"Berhasil menghapus member: **{member_to_del}**")
+          time.sleep(1)
           st.rerun()
         else:
           st.warning("Minimal harus menyisakan 1 member di dalam sistem!")
