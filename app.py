@@ -62,13 +62,13 @@ def save_data_to_sheets(row_data):
     return False
 
 
-# --- CUSTOM CSS: DESAIN PROFESIONAL & KONTRAS TINGGI ---
+# --- CUSTOM CSS: DESAIN PROFESIONAL & TOMBOL BERTEKS PUTIH ---
 st.markdown(
     """
     <style>
     .stApp { background-color: #f8fafc; }
     
-    /* Paksa semua teks label, header, dan pertanyaan agar terlihat jelas dan gelap */
+    /* Paksa teks label, header, dan pertanyaan agar terlihat jelas dan gelap */
     label, .stRadio label p, .stTextInput label, .stSelectbox label, h1, h2, h3, h4, h5, h6, p {
         color: #0f172a !important;
         font-weight: 600 !important;
@@ -79,6 +79,12 @@ st.markdown(
         color: white !important;
     }
 
+    /* Paksa semua teks di dalam tombol aksi agar berwarna PUTIH terang */
+    .stButton button p, .stButton button span, .stButton button {
+        color: white !important;
+        font-weight: 700 !important;
+    }
+    
     .main-header {
         background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
         padding: 20px 30px;
@@ -267,7 +273,6 @@ if menu == "📊 Dashboard Utama & Filter":
       align="center", baseline="bottom", dy=-5, fontWeight="bold", color="black"
   ).encode(text=alt.Text("Nominal:Q", format=",.0f"))
 
-  # Konfigurasi Grafik dengan Background Putih & Sumbu Hitam Tegas
   chart_gt = (
       (bars_gt + text_gt)
       .properties(height=300)
