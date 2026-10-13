@@ -62,11 +62,18 @@ def save_data_to_sheets(row_data):
     return False
 
 
-# --- CUSTOM CSS: DESAIN ORIGINAL & ELEGAN ---
+# --- CUSTOM CSS: DESAIN & PERBAIKAN WARNA TEKS MENU ---
 st.markdown(
     """
     <style>
     .stApp { background-color: #f8fafc; }
+    
+    /* Memastikan teks menu navigasi horizontal terlihat jelas dan tidak transparan */
+    .stRadio div[role="radiogroup"] label p {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: 15px !important;
+    }
     
     .main-header {
         background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
